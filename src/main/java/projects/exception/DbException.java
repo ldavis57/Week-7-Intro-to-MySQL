@@ -1,24 +1,26 @@
 package projects.exception;
+/*
+ *  This is an unchecked exception. 
+ */
 
+/*
+ * I suppressed the warnings to make it cleaner.
+ */
 @SuppressWarnings("serial")
 public class DbException extends RuntimeException {
 
-	public DbException() {
-		// TODO Auto-generated constructor stub
-	}
-
+	// Creates an exception with a message.
 	public DbException(String message) {
 		super(message);
-		// TODO Auto-generated constructor stub
 	}
 
+	// Creates an exception with a cause.
 	public DbException(Throwable cause) {
 		super(cause);
-		// TODO Auto-generated constructor stub
 	}
 
+	// Creates an exception with both message and cause.
 	public DbException(String message, Throwable cause) {
 		super(message, cause);
-		// TODO Auto-generated constructor stub
 	}
 }

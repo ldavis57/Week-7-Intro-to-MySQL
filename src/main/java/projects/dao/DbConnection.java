@@ -35,7 +35,6 @@ public class DbConnection {
 			return conn;
 		} catch (SQLException e) {
 			// Handling exceptions if connection fails
-		      
 			System.out.println("Connection failed.");
 			throw new DbException(e);
 		}

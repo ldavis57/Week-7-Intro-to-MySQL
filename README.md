@@ -1,3 +1,1 @@
 ﻿# mysql-java-projects
-
- test

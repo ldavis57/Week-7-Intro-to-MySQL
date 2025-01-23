@@ -9,7 +9,7 @@ public class ProjectService {
 	/**
 	 * Adds a new project by delegating the operation to the DAO layer.
 	 * 
-	 * @param project The `Project` entity to be added to the database.
+	 * @param project The `{@link Project entity to be added to the database.
 	 * @return The `Project` entity after it has been added to the database,
 	 *         including any generated ID or other database-set fields.
 	 */

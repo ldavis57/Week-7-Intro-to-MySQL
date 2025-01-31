@@ -1,12 +1,14 @@
 /**
- * 
+ * This abstract class provides common utility methods for Data Access Object (DAO) classes.
+ * It includes methods for managing database transactions, setting SQL parameters, 
+ * retrieving generated keys, and converting data between SQL and Java formats.
  */
 package provided.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.sql.Connection;
+import java.sql.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,88 +20,69 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
 
-/**
- * This class contains utility methods for the DAO class.
- * 
- * @author Promineo
- *
- */
 public abstract class DaoBase {
+
   /**
-   * This starts a MySQL transaction. Normally MySQL starts a transaction before every request and
-   * commits it after each request. By turning auto-commit off, the transaction is only committed
-   * when the application tells it to.
+   * Starts a database transaction by setting auto-commit to false.
    * 
-   * @param conn The connection on which to start the transaction.
-   * @throws SQLException Thrown if an error occurs starting the transaction.
+   * @param conn The database connection.
+   * @throws SQLException If an SQL error occurs.
    */
   protected void startTransaction(Connection conn) throws SQLException {
     conn.setAutoCommit(false);
   }
 
   /**
-   * Commit the transaction. This will write all the changes, if any, to the database.
+   * Commits the current transaction.
    * 
-   * @param conn The connection on which to commit the transaction.
-   * @throws SQLException Thrown if an error occurs committing the transaction.
+   * @param conn The database connection.
+   * @throws SQLException If an SQL error occurs.
    */
   protected void commitTransaction(Connection conn) throws SQLException {
     conn.commit();
   }
 
   /**
-   * Rolls back the changes so that nothing is committed.
+   * Rolls back the current transaction.
    * 
-   * @param conn The connection on which to roll back the transaction.
-   * @throws SQLException Thrown if an error occurs rolling back the transaction.
+   * @param conn The database connection.
+   * @throws SQLException If an SQL error occurs.
    */
   protected void rollbackTransaction(Connection conn) throws SQLException {
     conn.rollback();
   }
 
   /**
-   * This sets a parameter on a prepared statement. If the parameter is null, it is handled
-   * correctly.
+   * Sets a parameter for a prepared SQL statement, converting Java types to SQL types.
    * 
-   * @param stmt The prepared statement on which to set the parameter.
-   * @param parameterIndex This is the one-based index of the parameter. In the SQL that is bound to
-   *        the prepared statement, parameters are indicated by a question mark. From left-to-right,
-   *        the index is the order in which a question mark is encountered.
-   * @param value The parameter value. This may be null.
-   * @param classType This is the Java class type of the parameter. It is used to select the correct
-   *        method on the driver so that the parameter is added correctly. It is also used to set
-   *        the type in case the parameter is null.
-   * @throws SQLException Thrown if an error occurs.
+   * @param stmt The prepared statement.
+   * @param parameterIndex The index of the parameter (1-based).
+   * @param value The value to set.
+   * @param classType The Java class type of the value.
+   * @throws SQLException If an SQL error occurs.
    */
-  protected void setParameter(PreparedStatement stmt, int parameterIndex, Object value,
-      Class<?> classType) throws SQLException {
+  protected void setParameter(PreparedStatement stmt, int parameterIndex, Object value, Class<?> classType) throws SQLException {
     int sqlType = convertJavaClassToSqlType(classType);
 
-    if(Objects.isNull(value)) {
+    if (Objects.isNull(value)) {
       stmt.setNull(parameterIndex, sqlType);
-    }
-    else {
-      switch(sqlType) {
+    } else {
+      switch (sqlType) {
         case Types.DECIMAL:
-          stmt.setBigDecimal(parameterIndex, (BigDecimal)value);
+          stmt.setBigDecimal(parameterIndex, (BigDecimal) value);
           break;
-
         case Types.DOUBLE:
-          stmt.setDouble(parameterIndex, (Double)value);
+          stmt.setDouble(parameterIndex, (Double) value);
           break;
-
         case Types.INTEGER:
-          stmt.setInt(parameterIndex, (Integer)value);
+          stmt.setInt(parameterIndex, (Integer) value);
           break;
-
         case Types.OTHER:
           stmt.setObject(parameterIndex, value);
           break;
-
         case Types.VARCHAR:
-          stmt.setString(parameterIndex, (String)value);
+          stmt.setString(parameterIndex, (String) value);
           break;
-
         default:
           throw new DaoException("Unknown parameter type: " + classType);
       }
@@ -107,10 +90,11 @@ public abstract class DaoBase {
   }
 
   /**
-   * Converts from a Java class to a java.sql.Types value.
+   * Converts Java class types to corresponding SQL types.
    * 
-   * @param classType The class type
-   * @return A java.sql.Types value
+   * @param classType The Java class type.
+   * @return The corresponding SQL type.
+   * @throws DaoException If the class type is unsupported.
    */
   private int convertJavaClassToSqlType(Class<?> classType) {
     if(Integer.class.equals(classType)) {
@@ -132,24 +116,20 @@ public abstract class DaoBase {
     if(LocalTime.class.equals(classType)) {
       return Types.OTHER;
     }
-
     throw new DaoException("Unsupported class type: " + classType.getName());
   }
 
   /**
-   * This retrieves the number of child rows and adds one to the value. It is used to set the order
-   * of a child row. For a *real* application, a more sophisticated approach is desired. This method
-   * does not allow for entity reordering and does not allow for an entity to be deleted.
+   * Retrieves the next sequence number for a specific ID in a table.
    * 
-   * @param conn The connection
-   * @param id The ID of the parent entity
-   * @param tableName The name of the table with the child rows
-   * @param idName The name of the parent ID field
-   * @return The count of the entities attached to the parent plus one
-   * @throws SQLException Thrown if an error occurs.
+   * @param conn The database connection.
+   * @param id The ID to search for.
+   * @param tableName The name of the table.
+   * @param idName The name of the ID column.
+   * @return The next sequence number.
+   * @throws SQLException If an SQL error occurs.
    */
-  protected Integer getNextSequenceNumber(Connection conn, Integer id, String tableName,
-      String idName) throws SQLException {
+  protected Integer getNextSequenceNumber(Connection conn, Integer id, String tableName, String idName) throws SQLException {
     String sql = "SELECT COUNT(*) FROM " + tableName + " WHERE " + idName + " = ?";
 
     try(PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -166,29 +146,22 @@ public abstract class DaoBase {
   }
 
   /**
-   * This returns the integer primary key value of the last row inserted into the given table. It
-   * allows the ID to be inserted into the entity object after inserting it into the table.
+   * Retrieves the last inserted ID for a given table.
    * 
-   * The other way of doing this is to call {@link Statement#getGeneratedKeys()}, but this returns a
-   * result set that needs to be parsed for the ID. It's not really any easier than this approach
-   * but should be closer to database-agnostic.
-   * 
-   * @param conn The connection
-   * @param table The name of the table on which to get the last inserted primary key value
-   * @return The primary key value
-   * @throws SQLException Thrown if an error occurs
+   * @param conn The database connection.
+   * @param table The table name.
+   * @return The last inserted ID.
+   * @throws SQLException If an SQL error occurs.
    */
   protected Integer getLastInsertId(Connection conn, String table) throws SQLException {
     String sql = String.format("SELECT LAST_INSERT_ID() FROM %s", table);
 
-    try(Statement stmt = conn.createStatement()) {
-      try(ResultSet rs = stmt.executeQuery(sql)) {
-        if(rs.next()) {
-          return rs.getInt(1);
-        }
-
-        throw new SQLException("Unable to retrieve the primary key value. No result set!");
+    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+      if (rs.next()) {
+        return rs.getInt(1);
       }
+
+      throw new SQLException("Unable to retrieve the primary key value. No result set!");
     }
   }
 
@@ -232,7 +205,6 @@ public abstract class DaoBase {
    */
   protected <T> T extract(ResultSet rs, Class<T> classType) {
     try {
-      /* Obtain the constructor and create an object of the correct type. */
       Constructor<T> con = classType.getConstructor();
       T obj = con.newInstance();
 
@@ -241,10 +213,6 @@ public abstract class DaoBase {
         String colName = camelCaseToSnakeCase(field.getName());
         Class<?> fieldType = field.getType();
 
-        /*
-         * Set the field accessible flag which means that we can populate even private fields
-         * without using the setter.
-         */
         field.setAccessible(true);
         Object fieldValue = null;
 
@@ -289,8 +257,8 @@ public abstract class DaoBase {
   /**
    * This converts a camel case value (rowInsertTime) to snake case (row_insert_time).
    * 
-   * @param identifier The name in camel case to convert.
-   * @return The name converted to snake case.
+   * @param identifier The camelCase identifier.
+   * @return The snake_case equivalent.
    */
   private String camelCaseToSnakeCase(String identifier) {
     StringBuilder nameBuilder = new StringBuilder();
@@ -317,17 +285,10 @@ public abstract class DaoBase {
   @SuppressWarnings("serial")
   static class DaoException extends RuntimeException {
 
-    /**
-     * @param message
-     * @param cause
-     */
     public DaoException(String message, Throwable cause) {
       super(message, cause);
     }
 
-    /**
-     * @param message
-     */
     public DaoException(String message) {
       super(message);
     }

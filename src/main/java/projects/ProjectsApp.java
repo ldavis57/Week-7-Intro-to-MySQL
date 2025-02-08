@@ -137,10 +137,10 @@ public class ProjectsApp {
 		Integer projectId = getIntInput("Enter a project ID to select a project");
 
 		/*
-		 * Clear the current project selection. This must be done as a pre-step to fetching the
-		 * project because fetchProjectById() will throw an exception if an invalid
-		 * project ID is entered, which would leave the currently selected project
-		 * intact.
+		 * Clear the current project selection. This must be done as a pre-step to
+		 * fetching the project because fetchProjectById() will throw an exception if an
+		 * invalid project ID is entered, which would leave the currently selected
+		 * project intact.
 		 */
 		curProject = null;
 

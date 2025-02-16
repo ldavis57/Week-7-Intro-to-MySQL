@@ -40,7 +40,7 @@ Clone the project
   git clone https://github.com/ldavis57/mysql-java-projects
 ```
 🤝 Contact
-Lana Davis - @twitter_handle - email@email_client.com
+Lana Davis - davis.lanac@email_client.com
 
 Project Link: https://github.com/ldavis57/mysql-java-projects
 

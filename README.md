@@ -1,7 +1,7 @@
 ﻿# mysql-java-projects
 <div align="center">
 
-  <img src="assets/logo.png" alt="logo" width="200" height="auto" />
+  <img src="src/main/resources/readme_logo.png" alt="logo" width="200" height="auto" />
   <h1>Backend Programming Final Project</h1>
   
   <p>
